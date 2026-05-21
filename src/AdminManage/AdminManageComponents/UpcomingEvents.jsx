@@ -8,7 +8,7 @@ function UpcomingEvents() {
         <img
           src={eventImg}
           alt="World Mental Health Day"
-          className="w-full h-40 object-cover block"
+          className="w-full h-44 object-cover block"
         />
         <div className="p-3">
           <p className="text-sm font-semibold text-[#2a120a] mb-1">
@@ -22,4 +22,5 @@ function UpcomingEvents() {
     </div>
   )
 }
+
 export default UpcomingEvents

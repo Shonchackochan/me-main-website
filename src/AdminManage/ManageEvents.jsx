@@ -1,9 +1,9 @@
-import Navbar from './AdminComponents/Navbar'
-import Footer from './AdminComponents/Footer'
-import UpcomingEvents from './AdminComponents/UpcomingEvents'
-import EventActions from './AdminComponents/EventActions'
+import Navbar from './Admin Manage Components/Navbar'
+import Footer from './Admin Manage Components/Footer'
+import UpcomingEvents from './Admin Manage Components/UpcomingEvents'
+import EventActions from './Admin Manage Components/EventActions'
 
-function Dashboard() {
+function ManageEvents() {
   return (
     <div className="flex flex-col min-h-screen bg-[#f0ede8]">
       <Navbar />
@@ -28,4 +28,5 @@ function Dashboard() {
     </div>
   )
 }
-export default Dashboard
+
+export default ManageEvents
