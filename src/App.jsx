@@ -24,9 +24,20 @@ import {
 import { translations } from "./translations";
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Register from "./auth/Register";
-import Signin from "./auth/Signin"; 
-import Forgotpass from "./auth/Forgotpass";
+import Register from "./pages/auth/Registration/Register";
+import Signin from "./pages/auth/Signin/Signin"; 
+import ResetPass from "./pages/auth/ResetPassword/ResetPass";
+import ResetPass_S2 from "./pages/auth/ResetPassword_S2/ResetPass_S2";
+import ProtectedRoute from "./routes/ProctectedRoute";
+import VolunteerProfile from "./pages/VolunteerProfile";
+import AdminLayout from "./components/adminDashboard/layout/AdminLayout";
+import Dashboard from "./pages/admin/Dashboard";
+import Volunteers from "./pages/admin/Volunteers";
+import AdminEvents from "./pages/admin/AdminEvents";
+import NewsLetter from "./pages/admin/NewsLetter";
+import PhotoGallery from "./pages/admin/PhtotoGallery";
+import NewEvent from "./pages/admin/Newevent";
+import Calendar from "./pages/admin/Calendar";
 
 
 // --- Accessibility Constants for maintainability ---
@@ -832,7 +843,18 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<Register />} />
         <Route path="/signin" element={<Signin />} />
-        <Route path="/forgot-password" element={<Forgotpass />} />
+        <Route path="/reset-password" element={<ResetPass />} />
+        <Route path="/reset-password-step2" element={<ResetPass_S2 />} />
+        <Route path="/volunteer-profile" element={ <ProtectedRoute allowedRoles={["VOLUNTEER"]}><VolunteerProfile /></ProtectedRoute>  } />
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={["ADMIN"]}><AdminLayout /></ProtectedRoute>}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="volunteers" element={<Volunteers />} />
+          <Route path="events" element={<AdminEvents />} />
+          <Route path="newsletter" element={<NewsLetter />} />
+          <Route path="photogallery" element={<PhotoGallery />} />
+          <Route path="newevent" element={<NewEvent />} />
+          <Route path="calendar" element={<Calendar />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

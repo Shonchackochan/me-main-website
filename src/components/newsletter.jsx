@@ -1,40 +1,43 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { PhotoProvider, PhotoView } from 'react-photo-view';
 import 'react-photo-view/dist/react-photo-view.css';
 import { translations } from '../translations';
-
-const newsletters = [
-  { src: "/NL/2026/4.png", alt: "April 2026 Newsletter", date: "Apr 2026" },
-  { src: "/NL/2026/3.png", alt: "March 2026 Newsletter", date: "Mar 2026" },
-  { src: "/NL/2026/1.png", alt: "January 2026 Newsletter", date: "Jan 2026" },
-  { src: "/NL/2025/12.png", alt: "December 2025 Newsletter", date: "Dec 2025" },
-  { src: "/NL/2025/11.jpg", alt: "November 2025 Newsletter", date: "Nov 2025" },
-  { src: "/NL/2025/10.jpg", alt: "October 2025 Newsletter", date: "Oct 2025" },
-  { src: "/NL/2025/9.jpg", alt: "September 2025 Newsletter", date: "Sep 2025" },
-  { src: "/NL/2025/8.png", alt: "August 2025 Newsletter", date: "Aug 2025" },
-  { src: "/NL/2025/7.png", alt: "July 2025 Newsletter", date: "Jul 2025" },
-  { src: "/NL/2025/6.png", alt: "June 2025 Newsletter", date: "Jun 2025" },
-  { src: "/NL/2025/5.png", alt: "May 2025 Newsletter", date: "May 2025" },
-  { src: "/NL/2025/4.jpeg", alt: "April 2025 Newsletter", date: "Apr 2025" },
-  { src: "/NL/2025/3.jpeg", alt: "March 2025 Newsletter", date: "Mar 2025" },
-  { src: "/NL/2025/2.jpeg", alt: "February 2025 Newsletter", date: "Feb 2025" },
-  { src: "/NL/2025/1.jpeg", alt: "January 2025 Newsletter", date: "Jan 2025" },
-  { src: "/NL/2024/12.png", alt: "December 2024 Newsletter", date: "Dec 2024" },
-  { src: "/NL/2024/11.jpg", alt: "November 2024 Newsletter", date: "Nov 2024" },
-  { src: "/NL/2024/10.jpg", alt: "October 2024 Newsletter", date: "Oct 2024" },
-  { src: "/NL/2024/9.jpeg", alt: "September 2024 Newsletter", date: "Sep 2024" },
-  { src: "/NL/2024/8.jpeg", alt: "August 2024 Newsletter", date: "Aug 2024" },
-  { src: "/NL/2024/7.jpeg", alt: "July 2024 Newsletter", date: "Jul 2024" },
-  { src: "/NL/2024/6.jpg", alt: "June 2024 Newsletter", date: "Jun 2024" },
-  { src: "/NL/2024/5.jpg", alt: "May 2024 Newsletter", date: "May 2024" },
-];
-
-const latestNewsletter = newsletters[0];
+import { supabase } from "../services/supabase-client";
 
 const Newsletter = ({ language }) => {
   const scrollContainerRef = useRef(null);
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
+
+
+  const [newsLetter, setNewsLetter] = useState([]);
+  const newsletter = newsLetter[0];
+
+  const fetchnewsLetter = async () => {
+    try {
+      const { data, error } = await supabase
+        .schema("me_dataspace")
+        .from("newsletters")
+        .select("*")
+        .order("published_at", { ascending: false });
+
+      if (error) throw error;
+      setNewsLetter(data || []);
+    } catch (error) {
+      console.error('Error fetching newsletters:', error);
+      setNewsLetter([]);
+    }
+  };
+
+  //id, newsletter_url, publish_month, publish_yr
+  useEffect(() => {
+    fetchnewsLetter();
+  }, []);
+
+  const months = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
 
   const handleSubscribe = (e) => {
     e.preventDefault();
@@ -91,7 +94,7 @@ const Newsletter = ({ language }) => {
                 {translations.newsletter.latestTitle[language]}
               </span>
             </div>
-            
+
             <div className="relative bg-white p-3 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all duration-500 group-hover/card:-translate-y-4 group-hover/card:shadow-[0_40px_80px_rgba(70,23,17,0.15)] ring-1 ring-gray-100">
               <div className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-br from-[#ff7612] to-[#ffdb5b] rounded-full flex items-center justify-center shadow-lg z-10 transform scale-0 group-hover/card:scale-100 transition-transform duration-500 delay-100">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,14 +102,14 @@ const Newsletter = ({ language }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </div>
-              
+
               <div className="rounded-[2rem] overflow-hidden aspect-[3/4] relative ring-1 ring-gray-50">
                 <PhotoProvider maskOpacity={0.9}>
-                  <PhotoView src={latestNewsletter.src}>
+                  <PhotoView src={newsletter?.newsletter_url}>
                     <div className="relative h-full w-full cursor-pointer overflow-hidden">
                       <img
-                        src={latestNewsletter.src}
-                        alt={latestNewsletter.alt}
+                        src={newsletter?.newsletter_url}
+                        alt={`${months[newsletter?.publish_month - 1]} ${newsletter?.publish_yr}`}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
@@ -115,10 +118,14 @@ const Newsletter = ({ language }) => {
                 </PhotoProvider>
               </div>
             </div>
-            
+
             <div className="mt-8 text-center sm:text-left p-6 bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-sm">
-                <h4 className="text-xl font-bold text-[#461711] mb-2" style={manjariFont}>{latestNewsletter.alt}</h4>
-                <p className="text-sm text-gray-500 font-medium">Published on {latestNewsletter.date}</p>
+              <h4 className="text-xl font-bold text-[#461711] mb-2" style={manjariFont}>
+                {newsletter && newsletter.publish_month ? `${months[newsletter.publish_month - 1]} ${newsletter.publish_yr}` : ""}
+              </h4>
+              <p className="text-sm text-gray-500 font-medium">
+                {newsletter && newsletter.publish_month ? `Published on ${months[newsletter.publish_month - 1]} ${newsletter.publish_yr}` : ""}
+              </p>
             </div>
           </div>
         </div>
@@ -141,7 +148,7 @@ const Newsletter = ({ language }) => {
                 <p className="text-white/80 text-lg leading-relaxed font-medium" style={manjariFont}>
                   {translations.newsletter.formSubtitle[language]}
                 </p>
-                
+
                 <form onSubmit={handleSubscribe} className="space-y-4">
                   <div className="relative flex flex-col sm:flex-row gap-3">
                     <div className="relative flex-grow group/input">
@@ -195,29 +202,29 @@ const Newsletter = ({ language }) => {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
                 </button>
                 <button onClick={() => scroll('right')} className="p-2.5 bg-white rounded-xl shadow-sm hover:shadow-md hover:text-[#ff7612] transition-all active:scale-90 border border-gray-100">
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
                 </button>
               </div>
             </div>
 
             <div className="relative">
               <PhotoProvider maskOpacity={0.93}>
-                <div 
-                  ref={scrollContainerRef} 
+                <div
+                  ref={scrollContainerRef}
                   className="w-full flex items-center overflow-x-auto no-scrollbar pb-2 pt-1"
                 >
                   <div className="flex animate-marquee-slower hover:pause group/marquee pb-4">
-                    {[...newsletters.slice(1), ...newsletters.slice(1)].map((newsletter, index) => (
+                    {[...newsLetter.slice(1), ...newsLetter.slice(1)].map((newsletter, index) => (
                       <div key={index} className="flex-shrink-0 mx-3 group/item">
-                        <PhotoView src={newsletter.src}>
+                        <PhotoView src={newsletter?.newsletter_url}>
                           <div className="relative w-28 h-40 sm:w-36 sm:h-48 rounded-2xl overflow-hidden shadow-md transition-all duration-500 group-hover/item:-translate-y-2 group-hover/item:shadow-xl group-hover/item:ring-2 group-hover/item:ring-[#ff7612]/30 cursor-pointer">
                             <img
-                              src={newsletter.src}
-                              alt={newsletter.alt}
+                              src={newsletter.newsletter_url}
+                              alt={`${months[newsletter?.publish_month - 1]} ${newsletter?.publish_yr}`}
                               className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#461711]/80 via-transparent to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-500 flex items-end p-3">
-                                <p className="text-[10px] text-white font-bold tracking-wider leading-tight">{newsletter.date}</p>
+                              <p className="text-[10px] text-white font-bold tracking-wider leading-tight">{months[newsletter.publish_month - 1]} {newsletter.publish_yr}</p>
                             </div>
                           </div>
                         </PhotoView>
@@ -230,7 +237,7 @@ const Newsletter = ({ language }) => {
           </div>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes gradient-x {
           0% { background-position: 0% 50%; }
