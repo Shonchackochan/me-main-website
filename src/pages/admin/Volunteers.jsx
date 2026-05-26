@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase-client";
-import { FaEdit, FaTrash, FaSpinner, FaTimes } from "react-icons/fa";
+import { FaEdit, FaTrash, FaSpinner, FaTimes, FaUser } from "react-icons/fa";
 
 const Volunteers = () => {
   const [volunteers, setVolunteers] = useState([]);
@@ -25,7 +25,7 @@ const Volunteers = () => {
     setError(null);
     try {
       const { data, error } = await supabase
-        .schema('me_dataspace')
+        .schema("me_dataspace")
         .from("users")
         .select("*")
         .eq("role", "VOLUNTEER");
@@ -43,21 +43,21 @@ const Volunteers = () => {
 
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this volunteer?"
+      "Are you sure you want to delete this volunteer?",
     );
 
     if (!confirmDelete) return;
 
     try {
       const { error } = await supabase
-        .schema('me_dataspace')
+        .schema("me_dataspace")
         .from("users")
         .delete()
         .eq("userID", id);
 
       if (error) throw error;
 
-      setVolunteers(volunteers.filter(v => v.userID !== id));
+      setVolunteers(volunteers.filter((v) => v.userID !== id));
     } catch (err) {
       console.error("Error deleting volunteer:", err);
       alert("Failed to delete volunteer: " + err.message);
@@ -77,14 +77,19 @@ const Volunteers = () => {
 
   const handleEditInputChange = (e) => {
     const { name, value } = e.target;
-    setEditFormData(prev => ({
+    setEditFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSaveEdit = async () => {
-    if (!editingVolunteer || !editFormData.firstName.trim() || !editFormData.lastName.trim() || !editFormData.emailID.trim()) {
+    if (
+      !editingVolunteer ||
+      !editFormData.firstName.trim() ||
+      !editFormData.lastName.trim() ||
+      !editFormData.emailID.trim()
+    ) {
       setEditError("Please fill in all required fields");
       return;
     }
@@ -94,7 +99,7 @@ const Volunteers = () => {
 
     try {
       const { error } = await supabase
-        .schema('me_dataspace')
+        .schema("me_dataspace")
         .from("users")
         .update({
           firstName: editFormData.firstName.trim(),
@@ -106,16 +111,18 @@ const Volunteers = () => {
       if (error) throw error;
 
       // Update local state
-      setVolunteers(volunteers.map(v =>
-        v.userID === editingVolunteer.userID
-          ? {
-            ...v,
-            firstName: editFormData.firstName.trim(),
-            lastName: editFormData.lastName.trim(),
-            emailID: editFormData.emailID.trim(),
-          }
-          : v
-      ));
+      setVolunteers(
+        volunteers.map((v) =>
+          v.userID === editingVolunteer.userID
+            ? {
+                ...v,
+                firstName: editFormData.firstName.trim(),
+                lastName: editFormData.lastName.trim(),
+                emailID: editFormData.emailID.trim(),
+              }
+            : v,
+        ),
+      );
 
       setShowEditModal(false);
       setEditingVolunteer(null);
@@ -173,7 +180,9 @@ const Volunteers = () => {
       {!loading && volunteers.length === 0 && (
         <div className="bg-white rounded-xl p-12 text-center border border-gray-200">
           <p className="text-gray-500 text-lg">No volunteers found</p>
-          <p className="text-gray-400 text-sm mt-1">Volunteers will appear here once they register</p>
+          <p className="text-gray-400 text-sm mt-1">
+            Volunteers will appear here once they register
+          </p>
         </div>
       )}
 
@@ -190,68 +199,67 @@ const Volunteers = () => {
 
           {/* Rows */}
           <div className="overflow-auto max-h-[80vh]">
-          {volunteers.map((volunteer) => (
-            <div
-              key={volunteer.userID}
-              className="grid grid-cols-4 items-center p-4 border-t border-gray-100"
-            >
-              {/* Member */}
-              <div className="flex items-center gap-3">
-                <img
-                  src={
-                    volunteer.photo ||
-                    "https://via.placeholder.com/40"
-                  }
-                  alt="profile"
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+            {volunteers.map((volunteer) => (
+              <div
+                key={volunteer.userID}
+                className="grid grid-cols-4 items-center p-4 border-t border-gray-100"
+              >
+                {/* Member */}
+                <div className="flex items-center gap-3">
+                  {volunteer.photo ? (
+                    <img
+                      src={volunteer.photo}
+                      alt="profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <FaUser className="text-gray-400" />
+                    </div>
+                  )}
 
-                <p className="font-medium text-gray-700">
-                  {volunteer.firstName} {volunteer.lastName}
-                </p>
+                  <p className="font-medium text-gray-700">
+                    {volunteer.firstName} {volunteer.lastName}
+                  </p>
+                </div>
+
+                {/* Email */}
+                <p className="text-gray-600 text-sm">{volunteer.emailID}</p>
+
+                {/* Events */}
+                <div className="flex flex-wrap gap-2">
+                  {volunteer.events?.length > 0 ? (
+                    volunteer.events.map((event, index) => (
+                      <span
+                        key={index}
+                        className="bg-orange-100 text-[#B86B2B] px-2 py-1 rounded-full text-xs"
+                      >
+                        {event}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-400 text-sm">None yet</span>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-center gap-3">
+                  <button
+                    onClick={() => handleEdit(volunteer)}
+                    className="border p-2 rounded-lg hover:bg-blue-100 transition text-blue-600"
+                  >
+                    <FaEdit size={14} />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(volunteer.userID)}
+                    className="border p-2 rounded-lg hover:bg-red-100 transition text-red-600"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                </div>
               </div>
-
-              {/* Email */}
-              <p className="text-gray-600 text-sm">
-                {volunteer.emailID}
-              </p>
-
-              {/* Events */}
-              <div className="flex flex-wrap gap-2">
-                {volunteer.events?.length > 0 ? (
-                  volunteer.events.map((event, index) => (
-                    <span
-                      key={index}
-                      className="bg-orange-100 text-[#B86B2B] px-2 py-1 rounded-full text-xs"
-                    >
-                      {event}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-400 text-sm">
-                    None yet
-                  </span>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-center gap-3">
-                <button
-                  onClick={() => handleEdit(volunteer)}
-                  className="border p-2 rounded-lg hover:bg-blue-100 transition text-blue-600"
-                >
-                  <FaEdit size={14} />
-                </button>
-
-                <button
-                  onClick={() => handleDelete(volunteer.userID)}
-                  className="border p-2 rounded-lg hover:bg-red-100 transition text-red-600"
-                >
-                  <FaTrash size={14} />
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
       )}
@@ -262,7 +270,9 @@ const Volunteers = () => {
           <div className="bg-white rounded-xl max-w-md w-full max-h-screen overflow-y-auto">
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">Edit Volunteer</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Edit Volunteer
+              </h2>
               <button
                 onClick={closeEditModal}
                 className="text-gray-500 hover:text-gray-700"

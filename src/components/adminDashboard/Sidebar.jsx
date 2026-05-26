@@ -63,16 +63,19 @@ const Sidebar = () => {
 
     return (
         <aside className="w-64 h-screen bg-[#2C1A0E] p-6 flex flex-col gap-8 text-white">
-            {/* logo and name */}
-            <div className="flex items-center gap-4">
-                <div>
-                    <img src="/brand/logo.jpeg" alt="logo" className="w-14 rounded-full" />
+            <NavLink to="/admin/dashboard">
+                {/* logo and name */}
+                <div className="flex items-center gap-4" >
+
+                    <div>
+                        <img src="/brand/logo.jpeg" alt="logo" className="w-14 rounded-full" />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold">Mind Empowered</h2>
+                        <p className="text-[#E8954A]">Admin Panel</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 className="text-xl font-bold">Mind Empowered</h2>
-                    <p className="text-[#E8954A]">Admin Panel</p>
-                </div>
-            </div>
+            </NavLink>
             {/* menu items */}
             <hr></hr>
             <div>
@@ -82,12 +85,11 @@ const Sidebar = () => {
                         <ul>
                             {section.items.map((item, itemIndex) => (
                                 <NavLink key={itemIndex} to={item.path} className={({ isActive }) =>
-        `flex items-center gap-4 p-2 rounded-lg transition ${
-            isActive
-                ? "bg-[#C1622A] text-white"
-                : "hover:bg-[#C1622A]/60"
-        }`
-    }>
+                                    `flex items-center gap-4 p-2 rounded-lg transition ${isActive
+                                        ? "bg-[#C1622A] text-white"
+                                        : "hover:bg-[#C1622A]/60"
+                                    }`
+                                }>
                                     <span>{item.icon}</span>
                                     <span>{item.label}</span>
                                 </NavLink>

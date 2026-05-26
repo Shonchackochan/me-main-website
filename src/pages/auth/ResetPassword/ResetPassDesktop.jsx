@@ -42,7 +42,7 @@ const ResetPassDesktop = ({ form, setForm, error, setError, handleSubmit }) => {
                             value={form.email}
                             placeholder="Email"
                             onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                            className="w-full rounded-xl bg-white/20 px-4 py-2 placeholder-white/50 outline-none focus:ring-2 focus:ring-orange-400" />
+                            className="w-full rounded-xl bg-white px-4 py-2 placeholder-[#BBA898] border border-[#E0D4C4] outline-none focus:ring-2 focus:ring-orange-400" />
                     </div>
                     {/* error message */}
                     {error && <p className="text-red-400 text-sm">{error}</p>}

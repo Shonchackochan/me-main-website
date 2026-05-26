@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { FaGoogle, FaArrowLeft } from "react-icons/fa";
+import { FaGoogle, FaArrowLeft, FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from 'react-router-dom';
 const SigninDesktop = ({ form, setForm, error, handleSubmit }) => {
     const navigate = useNavigate();
+    const [showPassword, setShowPassword] = useState(false);
 
     return (
         <div className="relative h-screen overflow-hidden flex items-center justify-center">
@@ -55,14 +56,24 @@ const SigninDesktop = ({ form, setForm, error, handleSubmit }) => {
                     {/* password field */}
                     <div className="flex flex-col gap-2">
                         <label htmlFor="password">Password</label>
-                        <input
-                            type="password"
-                            name="password"
-                            id="password"
-                            value={form.password}
-                            onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-                            placeholder="Password"
-                            className="w-full rounded-xl bg-white px-4 py-2 text-sm sm:text-base placeholder-[#BBA898] border border-[#A64200] outline-none focus:ring-2 focus:ring-orange-400" />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                id="password"
+                                value={form.password}
+                                onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+                                placeholder="Password"
+                                className="w-full rounded-xl bg-white px-4 py-2 pr-12 text-sm sm:text-base placeholder-[#BBA898] border border-[#A64200] outline-none focus:ring-2 focus:ring-orange-400" />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(prev => !prev)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A64200] hover:text-[#7A3A00] outline-none"
+                            >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                        </div>
                     </div>
                     {/*redirect to register page field and forgot password */}
                     <div className="flex flex-col sm:flex-row items-center justify-between">

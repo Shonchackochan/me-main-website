@@ -21,7 +21,7 @@ const ResetPassMobile = ({ form, setForm, error, setError, handleSubmit }) => {
                         value={form.email}
                         onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
                         placeholder="Your email address"
-                        className="w-full rounded-xl bg-[#F5EFE6] px-4 py-2 placeholder-black/20 outline-none focus:ring-2 focus:ring-orange-400" />
+                        className="w-full rounded-xl bg-white px-4 py-2 placeholder-[#BBA898] border border-[#E0D4C4] outline-none focus:ring-2 focus:ring-orange-400" />
                 </div>
 
                 {/* error message */}

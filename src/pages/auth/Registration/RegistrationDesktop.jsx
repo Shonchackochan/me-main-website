@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 
 const RegistrationDesktop = ({ form, setForm, error, handleSubmit, onRegisterStep2 }) => {
@@ -9,6 +10,8 @@ const RegistrationDesktop = ({ form, setForm, error, handleSubmit, onRegisterSte
 	const [photoFile, setPhotoFile] = useState(null);
 	const [localError, setLocalError] = useState(null);
 	const [step2Error, setStep2Error] = useState(null);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [snackbarMessage, setSnackbarMessage] = useState(null);
 	const snackbarTimeoutRef = useRef(null);
 
@@ -236,14 +239,24 @@ const RegistrationDesktop = ({ form, setForm, error, handleSubmit, onRegisterSte
 							<label htmlFor="password" className="text-[#7A6A5A]">
 								Password
 							</label>
-							<input
-								type="password"
-								name="password"
-								id="password"
-								value={form.password}
-								onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-								placeholder="Create a password"
-								className="w-full rounded-xl bg-[#FAF6F1] border border-[#E0D4C4] px-4 py-2 placeholder-[#BBA898] outline-none focus:ring-2 focus:ring-orange-400" />
+							<div className="relative">
+								<input
+									type={showPassword ? "text" : "password"}
+									name="password"
+									id="password"
+									value={form.password}
+									onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+									placeholder="Create a password"
+									className="w-full rounded-xl bg-[#FAF6F1] border border-[#E0D4C4] px-4 py-2 pr-12 placeholder-[#BBA898] outline-none focus:ring-2 focus:ring-orange-400" />
+								<button
+									type="button"
+									onClick={() => setShowPassword(prev => !prev)}
+									aria-label={showPassword ? "Hide password" : "Show password"}
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7A3A00] hover:text-[#A64200] outline-none"
+								>
+									{showPassword ? <FaEyeSlash /> : <FaEye />}
+								</button>
+							</div>
 						</div>
 
 						{/* confirm password container */}
@@ -251,14 +264,24 @@ const RegistrationDesktop = ({ form, setForm, error, handleSubmit, onRegisterSte
 							<label htmlFor="confirmPassword" className="text-[#7A6A5A]">
 								Confirm Password
 							</label>
-							<input
-								type="password"
-								name="confirmPassword"
-								id="confirmPassword"
-								value={form.confirmPassword}
-								onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
-								placeholder="Confirm your password"
-						className="w-full rounded-xl bg-[#FAF6F1] border border-[#E0D4C4] px-4 py-2 placeholder-[#BBA898] outline-none focus:ring-2 focus:ring-orange-400" />
+							<div className="relative">
+								<input
+									type={showConfirmPassword ? "text" : "password"}
+									name="confirmPassword"
+									id="confirmPassword"
+									value={form.confirmPassword}
+									onChange={(e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))}
+									placeholder="Confirm your password"
+								className="w-full rounded-xl bg-[#FAF6F1] border border-[#E0D4C4] px-4 py-2 pr-12 placeholder-[#BBA898] outline-none focus:ring-2 focus:ring-orange-400" />
+								<button
+									type="button"
+									onClick={() => setShowConfirmPassword(prev => !prev)}
+									aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+									className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7A3A00] hover:text-[#A64200] outline-none"
+								>
+									{showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+								</button>
+							</div>
 				</div>
 
 				{/* form error message */}
