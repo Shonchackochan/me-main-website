@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase-client";
-import { FaSpinner, FaTimes, FaUsers, FaClock } from "react-icons/fa";
+import { FaSpinner, FaTimes, FaUsers, FaClock, FaCheck } from "react-icons/fa";
 
 const Events = () => {
   const [events, setEvents] = useState([]);
@@ -19,6 +19,7 @@ const Events = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [registeredVolunteers, setRegisteredVolunteers] = useState([]);
   const [volunteersLoading, setVolunteersLoading] = useState(false);
+  const [attendanceUpdating, setAttendanceUpdating] = useState({});
 
   useEffect(() => {
     fetchEvents();
@@ -92,7 +93,6 @@ const Events = () => {
     setEditFormData({
       title: event.title || "",
       description: event.description || "",
-      agenda: event.agenda || "",
       venue: event.venue || "",
       max_participants: event.max_participants ?? "",
       max_volunteers: event.max_volunteers ?? "",
@@ -103,18 +103,14 @@ const Events = () => {
       fromTime: toTimeStr(fromDT),
       toDate: toDateStr(toDT),
       toTime: toTimeStr(toDT),
-      enabled: event.enabled ?? true,
     });
     setEditError(null);
     setShowEditModal(true);
   };
 
   const handleEditInput = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditFormData((p) => ({
-      ...p,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setEditFormData((p) => ({ ...p, [name]: value }));
   };
 
   const handleBannerFileChange = (e) => {
@@ -171,7 +167,6 @@ const Events = () => {
       const updates = {
         title: editFormData.title.trim(),
         description: editFormData.description.trim(),
-        agenda: editFormData.agenda.trim() || null,
         venue: editFormData.venue.trim() || null,
         max_participants:
           editFormData.max_participants !== ""
@@ -185,7 +180,6 @@ const Events = () => {
         reg_deadline: editFormData.reg_deadline || null,
         fromDateTime,
         toDateTime,
-        enabled: editFormData.enabled,
       };
 
       const { error } = await supabase
@@ -216,14 +210,15 @@ const Events = () => {
       const { data: participations, error: pErr } = await supabase
         .schema("me_dataspace")
         .from("event_participation")
-        .select("id, participant_id, created_at")
+        .select("id, participant_id, created_at, registered_as")
         .eq("event_id", event.eventID)
-        .eq("registered_as", "registered");
+        .in("registered_as", ["registered", "attended"]);
       if (pErr) throw pErr;
       if (!participations?.length) {
         setVolunteersLoading(false);
         return;
       }
+
       const ids = participations.map((p) => p.participant_id);
       const { data: users, error: uErr } = await supabase
         .schema("me_dataspace")
@@ -231,12 +226,14 @@ const Events = () => {
         .select("userID, firstName, lastName, emailID, photo")
         .in("userID", ids);
       if (uErr) throw uErr;
+
       setRegisteredVolunteers(
         participations.map((p) => {
           const user = (users || []).find((u) => u.userID === p.participant_id);
           return {
             participationId: p.id,
             registeredAt: p.created_at,
+            attended: p.registered_as === "attended",
             ...(user || { firstName: "Unknown", lastName: "", emailID: "—" }),
           };
         }),
@@ -245,6 +242,32 @@ const Events = () => {
       alert("Failed to fetch volunteers: " + err.message);
     } finally {
       setVolunteersLoading(false);
+    }
+  };
+
+  // Toggle attended status — updates registered_as to "attended" or back to "registered"
+  const handleToggleAttendance = async (participationId, currentlyAttended) => {
+    setAttendanceUpdating((prev) => ({ ...prev, [participationId]: true }));
+    const newStatus = currentlyAttended ? "registered" : "attended";
+    try {
+      const { error } = await supabase
+        .schema("me_dataspace")
+        .from("event_participation")
+        .update({ registered_as: newStatus })
+        .eq("id", participationId);
+      if (error) throw error;
+
+      setRegisteredVolunteers((prev) =>
+        prev.map((v) =>
+          v.participationId === participationId
+            ? { ...v, attended: !currentlyAttended }
+            : v,
+        ),
+      );
+    } catch (err) {
+      alert("Failed to update attendance: " + err.message);
+    } finally {
+      setAttendanceUpdating((prev) => ({ ...prev, [participationId]: false }));
     }
   };
 
@@ -296,6 +319,8 @@ const Events = () => {
 
   const inputCls =
     "w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C97736]";
+
+  const attendedCount = registeredVolunteers.filter((v) => v.attended).length;
 
   return (
     <div className="p-6 bg-[#F7F2EC] min-h-screen">
@@ -369,7 +394,6 @@ const Events = () => {
         </div>
       )}
 
-      {/* Empty */}
       {!loading && filteredEvents.length === 0 && (
         <div className="bg-white rounded-xl p-12 text-center border border-gray-200 mt-5">
           <p className="text-gray-500">
@@ -390,10 +414,8 @@ const Events = () => {
                 key={event.eventID}
                 className="bg-white rounded-xl border border-gray-200 overflow-hidden"
               >
-                {/* Card Header: date badge + title + status */}
                 <div className="flex items-center justify-between px-4 pt-4 pb-2">
                   <div className="flex items-center gap-3">
-                    {/* Date badge */}
                     <div className="flex flex-col items-center justify-center bg-[#F7F2EC] rounded-lg w-12 h-12 flex-shrink-0">
                       <span className="text-lg font-bold text-[#A64200] leading-none">
                         {getDay(event.fromDateTime)}
@@ -430,7 +452,6 @@ const Events = () => {
                   </div>
                 </div>
 
-                {/* Card Body: thumbnail + description side by side */}
                 <div className="flex gap-3 px-4 pb-3">
                   {event.bannerURL ? (
                     <img
@@ -448,7 +469,6 @@ const Events = () => {
                   </p>
                 </div>
 
-                {/* Card Footer: action buttons */}
                 <div className="flex border-t border-gray-100">
                   <button
                     onClick={() => handleEdit(event)}
@@ -496,7 +516,6 @@ const Events = () => {
                   {editError}
                 </div>
               )}
-
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                   Banner
@@ -518,7 +537,6 @@ const Events = () => {
                   />
                 </label>
               </div>
-
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">
                   Title *
@@ -678,6 +696,26 @@ const Events = () => {
                 <FaTimes size={18} />
               </button>
             </div>
+
+            {/* Attendance summary bar */}
+            {registeredVolunteers.length > 0 && (
+              <div className="px-5 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  Attended:{" "}
+                  <span className="font-semibold text-green-600">
+                    {attendedCount}
+                  </span>
+                  <span className="text-gray-400">
+                    {" "}
+                    / {registeredVolunteers.length}
+                  </span>
+                </span>
+                <span className="text-xs text-gray-400">
+                  Check to mark as attended
+                </span>
+              </div>
+            )}
+
             <div className="p-5 flex-1 overflow-y-auto">
               {volunteersLoading ? (
                 <div className="flex justify-center py-8">
@@ -688,16 +726,41 @@ const Events = () => {
                   No volunteers registered yet.
                 </p>
               ) : (
-                <div className="space-y-3">
-                  <p className="text-xs text-gray-400">
-                    {registeredVolunteers.length} volunteer
-                    {registeredVolunteers.length !== 1 ? "s" : ""}
-                  </p>
+                <div className="space-y-2">
                   {registeredVolunteers.map((v) => (
                     <div
                       key={v.participationId}
-                      className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50"
+                      className={`flex items-center gap-3 p-3 border rounded-lg transition ${
+                        v.attended
+                          ? "border-green-200 bg-green-50"
+                          : "border-gray-100 bg-gray-50"
+                      }`}
                     >
+                      {/* Attendance checkbox */}
+                      <button
+                        onClick={() =>
+                          handleToggleAttendance(v.participationId, v.attended)
+                        }
+                        disabled={!!attendanceUpdating[v.participationId]}
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition ${
+                          v.attended
+                            ? "bg-green-500 border-green-500 text-white"
+                            : "border-gray-300 bg-white hover:border-green-400"
+                        }`}
+                        title={
+                          v.attended
+                            ? "Mark as not attended"
+                            : "Mark as attended"
+                        }
+                      >
+                        {attendanceUpdating[v.participationId] ? (
+                          <FaSpinner className="animate-spin" size={10} />
+                        ) : v.attended ? (
+                          <FaCheck size={10} />
+                        ) : null}
+                      </button>
+
+                      {/* Avatar */}
                       {v.photo ? (
                         <img
                           src={v.photo}
@@ -710,8 +773,12 @@ const Events = () => {
                           {v.lastName?.charAt(0)}
                         </div>
                       )}
+
+                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-800 text-sm">
+                        <p
+                          className={`font-medium text-sm ${v.attended ? "text-green-800" : "text-gray-800"}`}
+                        >
                           {v.firstName} {v.lastName}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
@@ -721,11 +788,19 @@ const Events = () => {
                           {formatDate(v.registeredAt)}
                         </p>
                       </div>
+
+                      {/* Attended badge */}
+                      {v.attended && (
+                        <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full flex-shrink-0">
+                          Attended
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
             <div className="p-5 border-t border-gray-200">
               <button
                 onClick={() => setShowVolunteersModal(false)}

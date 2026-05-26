@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../services/supabase-client";
-import { FaTimes, FaSpinner } from "react-icons/fa";
+import { FaTimes, FaSpinner, FaChevronRight, FaChevronLeft } from "react-icons/fa";
 
 const UpcomingEventsSection = () => {
   const [events, setEvents] = useState([]);
@@ -9,6 +9,8 @@ const UpcomingEventsSection = () => {
   const [showDetails, setShowDetails] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [registerStatus, setRegisterStatus] = useState(null); // 'success' | 'error' | 'already'
+  const [currentPage, setCurrentPage] = useState(0);
+  const EVENTS_PER_PAGE = 3;
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -48,6 +50,7 @@ const UpcomingEventsSection = () => {
     setSelectedEvent(null);
     setRegisterStatus(null);
   };
+
   const handleRegisterAsVolunteer = async () => {
     setRegistering(true);
     setRegisterStatus(null);
@@ -169,11 +172,31 @@ const UpcomingEventsSection = () => {
       setRegistering(false);
     }
   };
+
+  // Pagination logic
+  const totalPages = Math.ceil(events.length / EVENTS_PER_PAGE);
+  const paginatedEvents = events.slice(
+    currentPage * EVENTS_PER_PAGE,
+    (currentPage + 1) * EVENTS_PER_PAGE
+  );
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   if (loading) return <div>Loading events...</div>;
 
   return (
     <>
-      <div className="bg-white rounded-2xl p-6 flex flex-col h-80">
+      <div className="bg-white rounded-2xl p-6 flex flex-col h-full">
         <h2 className="text-2xl font-bold mb-4 text-[#8A7060]">
           Upcoming Events
         </h2>
@@ -181,47 +204,84 @@ const UpcomingEventsSection = () => {
         {events.length === 0 ? (
           <p className="text-gray-600">No upcoming events</p>
         ) : (
-          <div className="space-y-4 overflow-y-auto flex-1">
-            {events.map((event) => (
-              <div
-                key={event.eventID}
-                className="border rounded-lg p-4 hover:shadow-md transition"
-              >
-                <div className="flex gap-4">
-                  {event.bannerURL && (
-                    <img
-                      src={event.bannerURL}
-                      alt={event.title}
-                      className="w-24 h-24 object-cover rounded"
-                    />
-                  )}
-                  <div className="flex-1 flex justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-[#A64200]">
-                        {event.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm">
-                        {event.description}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        {new Date(event.fromDateTime).toLocaleDateString()} at{" "}
-                        {new Date(event.fromDateTime).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
+          <>
+            <div className="space-y-4 flex-1 mb-4">
+              {paginatedEvents.map((event) => (
+                <div
+                  key={event.eventID}
+                  className="border rounded-lg p-4 hover:shadow-md transition"
+                >
+                  <div className="flex gap-4">
+                    {event.bannerURL && (
+                      <img
+                        src={event.bannerURL}
+                        alt={event.title}
+                        className="w-24 h-24 object-cover rounded"
+                      />
+                    )}
+                    <div className="flex-1 flex justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-[#A64200]">
+                          {event.title}
+                        </h3>
+                        <p className="text-gray-600 text-sm">
+                          {event.description}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          {new Date(event.fromDateTime).toLocaleDateString()} at{" "}
+                          {new Date(event.fromDateTime).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleVolunteerClick(event)}
+                        className="mt-3 px-4 py-2 bg-[#A64200] text-white rounded-xl hover:bg-[#8a3600] transition self-start"
+                      >
+                        Volunteer
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleVolunteerClick(event)}
-                      className="mt-3 px-4 py-2 bg-[#A64200] text-white rounded-xl hover:bg-[#8a3600] transition self-start"
-                    >
-                      Volunteer
-                    </button>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t pt-4">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 0}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                    currentPage === 0
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <FaChevronLeft size={14} />
+                  Previous
+                </button>
+
+                <div className="text-sm text-gray-600">
+                  Page {currentPage + 1} of {totalPages}
+                </div>
+
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages - 1}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                    currentPage === totalPages - 1
+                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "bg-[#A64200] text-white hover:bg-[#8a3600]"
+                  }`}
+                >
+                  Next
+                  <FaChevronRight size={14} />
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 

@@ -24,15 +24,58 @@ const Volunteers = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase
+      // Fetch all volunteers
+      const { data: volunteersData, error: volunteersError } = await supabase
         .schema("me_dataspace")
         .from("users")
         .select("*")
         .eq("role", "VOLUNTEER");
 
-      if (error) throw error;
+      if (volunteersError) throw volunteersError;
 
-      setVolunteers(data || []);
+      // For each volunteer, fetch their attended events
+      const volunteersWithEvents = await Promise.all(
+        (volunteersData || []).map(async (volunteer) => {
+          try {
+            // Fetch attended events for this volunteer
+            const { data: attendedData, error: attendedError } = await supabase
+              .schema("me_dataspace")
+              .from("event_participation")
+              .select("event_id")
+              .eq("participant_id", volunteer.userID)
+              .eq("registered_as", "attended");
+
+            if (attendedError) throw attendedError;
+
+            // If no attended events, return volunteer without events
+            if (!attendedData || attendedData.length === 0) {
+              return { ...volunteer, events: [] };
+            }
+
+            // Get event titles
+            const eventIds = attendedData.map((a) => a.event_id);
+            const { data: eventsData, error: eventsError } = await supabase
+              .schema("me_dataspace")
+              .from("events")
+              .select("eventID, title")
+              .in("eventID", eventIds);
+
+            if (eventsError) throw eventsError;
+
+            const eventTitles = (eventsData || []).map((e) => e.title);
+
+            return { ...volunteer, events: eventTitles };
+          } catch (err) {
+            console.error(
+              `Error fetching events for volunteer ${volunteer.userID}:`,
+              err,
+            );
+            return { ...volunteer, events: [] };
+          }
+        }),
+      );
+
+      setVolunteers(volunteersWithEvents);
     } catch (err) {
       console.error("Error fetching volunteers:", err);
       setError(err.message || "Failed to fetch volunteers");
@@ -193,7 +236,7 @@ const Volunteers = () => {
           <div className="grid grid-cols-4 bg-[#EFE7DD] text-[#6B4B2A] text-sm font-semibold p-4">
             <p>Member</p>
             <p>Email</p>
-            <p>Events Volunteered</p>
+            <p>Events Attended</p>
             <p className="text-center">Actions</p>
           </div>
 
@@ -226,9 +269,9 @@ const Volunteers = () => {
                 {/* Email */}
                 <p className="text-gray-600 text-sm">{volunteer.emailID}</p>
 
-                {/* Events */}
+                {/* Events Attended */}
                 <div className="flex flex-wrap gap-2">
-                  {volunteer.events?.length > 0 ? (
+                  {volunteer.events && volunteer.events.length > 0 ? (
                     volunteer.events.map((event, index) => (
                       <span
                         key={index}
@@ -238,7 +281,7 @@ const Volunteers = () => {
                       </span>
                     ))
                   ) : (
-                    <span className="text-gray-400 text-sm">None yet</span>
+                    <span className="text-gray-400 text-sm">No events attended</span>
                   )}
                 </div>
 
